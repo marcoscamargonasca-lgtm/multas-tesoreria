@@ -1,0 +1,56 @@
+SISTEMA DE ASISTENCIA, MULTAS Y TESORERÍA
+==========================================
+
+Incluye:
+- Registro e inicio de sesión con Supabase Auth.
+- Roles integrante/tesorero (el rol tesorero se asigna en SQL, no desde el navegador).
+- Reuniones y faenas.
+- Lista grupal y multas automáticas: reunión tardanza S/5, falta S/10; faena tardanza S/25, falta S/50.
+- Justificaciones registradas sin multa automática (el tesorero debe revisarlas).
+- Estado de cuenta individual y registro de pagos aplicados a deudas antiguas.
+- Ingresos, gastos, evidencia en archivo, constancia de firma escrita.
+- Exportación XLSX y PDF.
+- Supabase RLS y bucket privado para evidencias.
+
+IMPORTANTE:
+Esta es una primera versión funcional para instalar y probar. Antes de usarla con dinero real, realiza pruebas con cuentas ficticias, revisa las reglas internas de la organización y configura respaldos. La firma escrita no equivale a firma digital certificada. La evidencia de gasto se hace visible a los integrantes para transparencia.
+
+INSTALACIÓN
+1. Crea un proyecto en https://supabase.com.
+2. En Supabase > SQL Editor, ejecuta TODO el archivo supabase_schema.sql.
+3. En Supabase > Project Settings > API, copia Project URL y la clave anon/public.
+4. Abre index.html y reemplaza:
+   SUPABASE_URL: "PEGA_AQUI_TU_URL_SUPABASE"
+   SUPABASE_ANON_KEY: "PEGA_AQUI_TU_CLAVE_ANON_PUBLIC"
+   ORG_NAME: "Nombre de la organización"
+   Usa únicamente la clave anon/public. NUNCA pongas service_role en el navegador.
+5. Publica index.html en GitHub Pages o en otro hosting HTTPS.
+6. Crea la cuenta del tesorero desde el formulario de registro.
+7. En Supabase > Authentication > Users, copia el UUID del usuario tesorero.
+8. En SQL Editor ejecuta, reemplazando el UUID:
+   update public.profiles set role='treasurer' where id='UUID-DEL-TESORERO';
+9. Inicia sesión como tesorero. Los demás usuarios que se registren tendrán rol integrante.
+10. Configura Authentication > URL Configuration con la URL publicada y localhost de pruebas.
+
+NOTAS DE OPERACIÓN
+- La confirmación de correo puede estar activada en Supabase; si lo está, el usuario deberá confirmar su email.
+- Las cuentas nuevas crean automáticamente su perfil con rol member.
+- El tesorero registra las actividades y pasa lista a todo el padrón activo.
+- Si marca “Justificó”, debe escribir el motivo. La aplicación no cobra multa por esa condición.
+- Para corregir asistencia, el tesorero vuelve a abrir la lista y guarda la nueva condición. La función reemplaza la multa anterior asociada a esa asistencia.
+- Los pagos se aplican primero a los cargos más antiguos. Si se recibe más dinero que la deuda, el total recibido queda en caja; el excedente no crea saldo negativo.
+- Los reportes se generan en el navegador. El PDF/Excel respeta los datos que el usuario tiene permiso de consultar.
+- Los documentos de evidencia se almacenan en un bucket privado y se abren mediante enlaces temporales.
+- Los gastos y comprobantes son visibles para todos los integrantes autenticados para transparencia.
+- El saldo agregado de caja se calcula en el servidor y se muestra a todos los integrantes; los detalles contables completos quedan para el tesorero.
+- Para auditoría más estricta, conviene añadir bitácora inmutable de cambios, aprobación de gastos y firma digital certificada en una fase posterior.
+
+PRUEBAS ANTES DE USAR
+- Crear un integrante de prueba y un tesorero.
+- Crear una reunión y una faena.
+- Marcar puntual, tarde, falta y justificación.
+- Confirmar cargos esperados y que justificación no genere cargo.
+- Registrar pagos parciales y completos.
+- Registrar gasto con archivo y verificar el enlace.
+- Probar exportación Excel/PDF.
+- Entrar con cuenta integrante y confirmar que no puede registrar ingresos/gastos ni ver deudas de otros.
